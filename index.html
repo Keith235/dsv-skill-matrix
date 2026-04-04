@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DSV Skill Matrix - WM Module Assessment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(165deg, #0B1D3A 0%, #142850 40%, #1B3A5C 100%);
+    color: #E8ECF1;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .grid-overlay {
+    position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+  .wrapper {
+    position: relative; z-index: 1;
+    max-width: 480px; margin: 0 auto; padding: 20px 16px;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+  .fade-in { animation: fadeUp 0.28s ease forwards; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 16px; padding: 24px 20px; margin-bottom: 16px;
+    box-shadow: 0 10px 36px rgba(0,0,0,0.12);
+  }
+  .btn {
+    width: 100%; padding: 16px 24px;
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    color: #fff; border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    letter-spacing: 0.02em; font-family: inherit;
+    box-shadow: 0 4px 20px rgba(37,99,235,0.30);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+  .btn-secondary {
+    background: rgba(255,255,255,0.08); box-shadow: none;
+    width: auto;
+  }
+  .step-label {
+    font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 4px;
+    text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;
+  }
+  h1, h2 { font-weight: 800; }
+  h1 { font-size: 28px; }
+  h2 { font-size: 22px; margin: 0 0 6px; }
+  .sub { font-size: 13px; color: rgba(255,255,255,0.55); margin: 0 0 24px; line-height: 1.7; }
+  .section-card {
+    cursor: pointer; display: flex; align-items: center; gap: 16px;
+    padding: 20px; transition: all 0.2s ease;
+  }
+  .section-card.selected {
+    border: 2px solid #2563EB; background: rgba(37,99,235,0.12);
+  }
+  .section-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; flex-shrink: 0;
+    background: rgba(255,255,255,0.08);
+  }
+  .section-card.selected .section-icon { background: rgba(37,99,235,0.18); }
+  .checkbox {
+    width: 24px; height: 24px; border-radius: 6px;
+    border: 2px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease; flex-shrink: 0;
+  }
+  .checkbox.checked { border: none; background: #2563EB; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 700;
+  }
+  .badge-section { background: rgba(37,99,235,0.15); color: #93C5FD; }
+  .badge-sub { background: rgba(251,191,36,0.15); color: #FCD34D; }
+  .progress-bar { height: 5px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden; }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, #2563EB, #60A5FA);
+    transition: width 0.28s ease;
+  }
+  .option-btn {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 15px 16px; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; cursor: pointer;
+    transition: all 0.2s ease; text-align: left; width: 100%;
+    font-family: inherit; color: #F1F5F9;
+  }
+  .option-btn.selected { border: 2px solid #2563EB; background: rgba(37,99,235,0.14); }
+  .option-marker {
+    width: 26px; height: 26px; min-width: 26px;
+    border-radius: 50%; border: 2px solid rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px; font-size: 12px; font-weight: 800;
+    color: rgba(255,255,255,0.88);
+  }
+  .option-btn.selected .option-marker {
+    border-color: #60A5FA; background: #2563EB; color: #fff;
+  }
+  .helper-text { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 10px; line-height: 1.6; }
+  input[type="text"] {
+    width: 100%; padding: 16px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px; color: #fff; font-size: 16px;
+    outline: none; font-family: inherit;
+  }
+  input[type="text"]:focus { border-color: #2563EB; }
+  textarea {
+    width: 100%; min-height: 132px; resize: vertical;
+    padding: 16px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px; color: #fff; font-size: 14px; line-height: 1.7;
+    outline: none; font-family: inherit;
+  }
+  textarea:focus { border-color: #2563EB; }
+  textarea::placeholder { color: rgba(255,255,255,0.34); }
+  .info-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .info-card {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 14px; padding: 20px 18px;
+  }
+  .info-card h3 { font-size: 15px; font-weight: 800; margin-bottom: 10px; color: #F8FAFC; }
+  .info-card p, .info-card li { font-size: 13px; line-height: 1.7; color: rgba(255,255,255,0.72); }
+  .info-card ul { list-style: none; padding-left: 0; }
+  .info-card li { position: relative; padding-left: 14px; word-break: keep-all; line-break: strict; }
+  .info-card li::before { content: '•'; position: absolute; left: 0; color: #60A5FA; }
+  .muted-note {
+    padding: 14px 16px; border-radius: 12px; font-size: 13px; line-height: 1.6;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.72);
+  }
+  .accent-line {
+    position: absolute; height: 3px; width: 140%; left: -20%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+    transform: rotate(-15deg);
+    pointer-events: none;
+  }
+  .accent-line.top { top: 24%; }
+  .accent-line.bottom { bottom: 28%; }
+  .confirm-icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; margin: 0 auto 16px;
+    background: rgba(37,99,235,0.15); border: 1px solid rgba(37,99,235,0.25);
+  }
+  .duplicate-icon {
+    width: 72px; height: 72px; border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; margin: 0 auto 20px;
+    background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25);
+  }
+  .loading-spinner {
+    width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.15);
+    border-top-color: #60A5FA; border-radius: 50%;
+    animation: spin 0.7s linear infinite; margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 420px) {
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="grid-overlay"></div>
+<div class="wrapper" id="app"></div>
+
+<script>
+/* ══════════════════════════════════════
+   Google Apps Script URL (배포 후 입력)
+   ══════════════════════════════════════ */
+const GOOGLE_SCRIPT_URL = "";
+
+/* ══════════════════════════════════════
+   ROLE DATA
+   ══════════════════════════════════════ */
+const ROLE_DATA = {
+  op: {
+    id: "op",
+    name: "OP (Operator)",
+    shortName: "OP",
+    icon: "🛠️",
+    title: "Skill Matrix Assessment",
+    description: "OP(Operator)는 Inbound, Warehouse Management, Outbound 전 과정에서 RF Gun을 활용한 작업을 수행합니다. 본 평가는 각 업무 단계에서 요구되는 RF Gun 활용 능력과 업무 이해도를 기준으로 숙련도를 평가하기 위해 진행됩니다.",
+    sections: [
+      {
+        sectionTitle: "Inbound RF Gun 작업",
+        subSection: "Receiving Process",
+        questions: [
+          { id: "1-1", type: "multiple", question: "Goods Receipt 단계에서 RF Gun으로 스캔해야 하는 항목은 무엇입니까?", options: ["Delivery Note", "Bill of Lading", "PO"] },
+          { id: "1-2", type: "multiple", question: "Scan 입력 단계에서 RF Gun으로 스캔해야 하는 항목을 선택하십시오.", options: ["Material", "Quantity", "Labels", "Qty per", "Print Barcode", "Reason Code"] },
+          { id: "1-3-1", type: "single", parentQuestion: "Scan 입력 단계에서 각 항목에 입력해야 하는 내용을 선택하십시오.", questionLabel: "Material", question: "Material 항목에 입력해야 하는 내용을 선택하십시오.", options: ["P/N", "Serial"] },
+          { id: "1-3-2", type: "single", parentQuestion: "Scan 입력 단계에서 각 항목에 입력해야 하는 내용을 선택하십시오.", questionLabel: "Quantity", question: "Quantity 항목에 입력해야 하는 내용을 선택하십시오.", options: ["수량", "Part"] },
+          { id: "1-3-3", type: "single", parentQuestion: "Scan 입력 단계에서 각 항목에 입력해야 하는 내용을 선택하십시오.", questionLabel: "Labels", question: "Labels 항목에 입력해야 하는 내용을 선택하십시오.", options: ["출력해야 할 입고 Label의 장수", "Label에 표시될 입고 수량"] },
+          { id: "1-3-4", type: "single", parentQuestion: "Scan 입력 단계에서 각 항목에 입력해야 하는 내용을 선택하십시오.", questionLabel: "Qty per", question: "Qty per 항목에 입력해야 하는 내용을 선택하십시오.", options: ["Label 1장에 표시될 입고 수량", "출력해야 할 입고 Label의 장수"] },
+          { id: "1-3-5", type: "single", parentQuestion: "Scan 입력 단계에서 각 항목에 입력해야 하는 내용을 선택하십시오.", questionLabel: "Print Barcode", question: "Print Barcode 항목에 입력해야 하는 내용을 선택하십시오.", options: ["Y 입력", "공란 입력"] },
+          { id: "1-3-6", type: "single", parentQuestion: "Scan 입력 단계에서 각 항목에 입력해야 하는 내용을 선택하십시오.", questionLabel: "Reason Code", question: "Reason Code 항목에 입력해야 하는 내용을 선택하십시오.", options: ["Label의 Barcode 출력 여부 설정", "Label의 Part 정보 출력 여부 설정"] },
+          { id: "1-4", type: "single", question: "GR Text 화면이 나타났을 때 수행해야 하는 작업은 무엇입니까?", options: ["PDA 또는 WMS에서 GR Text 문구가 포함된 Label을 출력하여 부착한다.", "GR Text 문구를 확인만 하고 작업을 진행한다."] },
+          { id: "1-5", type: "single", question: "입고 Scan 작업이 정상적으로 완료되었을 때 출력되는 Label은 무엇입니까?", options: ["Zpick Label", "SU Label"] },
+          { id: "1-6", type: "single", question: "Scan 입력 후 RF 화면에 표시되는 문구는 무엇입니까?", options: ["Transfer Order ########## Created", "Goods Receipt ########## Confirmed"] }
+        ]
+      },
+      {
+        sectionTitle: "Move to Cart",
+        questions: [
+          { id: "2-1", type: "single", question: "Storage Unit Number 입력 시 스캔해야 하는 값은 무엇입니까?", options: ["SU Number", "TO Number"] },
+          { id: "2-2", type: "single", question: "Material Scan Supplier Label 입력 시 스캔해야 하는 값은 무엇입니까?", options: ["P/N", "SU Number"] },
+          { id: "2-3", type: "single", question: "Cart 입력 단계에서 입력해야 하는 값은 무엇입니까?", options: ["Putaway Cart Number", "Bin Location"] }
+        ]
+      },
+      {
+        sectionTitle: "Cart to Bin",
+        questions: [
+          { id: "3-1", type: "single", question: "Putaway 진행 시 확인해야 하는 항목은 무엇입니까?", options: ["SU Number", "TO Number"] },
+          { id: "3-2", type: "single", question: "RF Gun에서 선택 시 입력해야 하는 값은 무엇입니까?", options: ["Number", "SU Number"] },
+          { id: "3-3", type: "multiple", question: "Putaway SU Scan 단계에서 입력해야 하는 항목을 선택하십시오.", options: ["Part", "SU", "Bin Location"] }
+        ]
+      },
+      {
+        sectionTitle: "Outbound RF Gun 작업",
+        subSection: "Picking",
+        questions: [
+          { id: "4-1", type: "multiple", question: "RF Gun을 사용하여 Picking을 수행하는 Plant를 선택하십시오.", options: ["4100", "4101"] },
+          { id: "4-2", type: "multiple", question: "Picking 작업 시 필요한 장비를 선택하십시오.", options: ["RF Gun", "Label Printer", "Picking List"] },
+          { id: "4-3", type: "multiple", question: "Picking 작업 중 RF Gun에 입력해야 하는 항목을 선택하십시오.", options: ["Bin Location", "P/N", "Quantity", "SU"] },
+          { id: "4-4", type: "single", question: "Picking 작업이 완료되었을 때 출력되는 Label은 무엇입니까?", options: ["Zpick Label", "SU Label"] },
+          { id: "4-5", type: "single", question: "RF Gun에 Picking할 오더가 없을 때 표시되는 내용은 무엇입니까?", options: ["더 이상 Pick을 진행할 작업이 없음을 의미하는 메시지", "Picking 화면이 계속 유지되는 상태"] },
+          { id: "4-6", type: "multiple", question: "Consolidation 진행 시 처음 입력해야 하는 정보를 선택하십시오.", options: ["TO", "P/N", "SU"] },
+          { id: "4-7", type: "single", question: "다음 단계로 이동하기 위해 선택해야 하는 Command는 무엇입니까?", options: ["OK", "Back", "Next", "Save"] },
+          { id: "4-8", type: "multiple", question: "Consolidation 완료를 위해 입력해야 하는 정보를 선택하십시오.", options: ["DN", "P/N", "Quantity", "SU Number"] }
+        ]
+      }
+    ]
+  },
+  cs: {
+    id: "cs",
+    name: "CS (Customer Service)",
+    shortName: "CS",
+    icon: "📋",
+    title: "Skill Matrix Assessment",
+    description: "CS(Customer Service)는 SAP WM 환경에서 BLOCK 처리, SLOC/PLANT 이동, Wave, PGI Reverse, Assign 등의 업무를 수행합니다. 본 평가는 각 업무 단계에서 요구되는 SAP-WMS 활용 능력과 업무 이해도를 기준으로 숙련도를 평가하기 위해 진행됩니다.",
+    sections: [
+      {
+        sectionTitle: "BLOCK",
+        subSection: "SAP-WMS 활용도 평가",
+        questions: [
+          { id: "1-1", type: "single", question: "BLOCK 처리에 사용하는 T-code 는?", options: ["LQ02", "MB1B", "MB51"] },
+          { id: "1-2", type: "single", question: "BLOCK 처리 후 SAP에서 이동해야 할 Storage Bin 은?", options: ["SCRAPBIN", "ZZBLOCK", "ZCANCEL"] },
+          { id: "1-3", type: "multiple", question: "SAP 처리 DN 발행이 된 후 PGI를 위해 사용하는 T-Code 는?", options: ["LM07", "LM05", "ZBC5", "ZBC7"] }
+        ]
+      },
+      {
+        sectionTitle: "SLOC 이동",
+        subSection: "SAP-WMS 활용도 평가",
+        questions: [
+          { id: "2-1", type: "multiple", question: "SLOC 이동을 하기 위해 사용하는 T-code 는?", options: ["MB1A", "MB1B", "LT10", "LT01", "LT0G"] },
+          { id: "2-2", type: "single", question: "SLOC 이동 후 LS24에서 생성되는 Storage type 은?", options: ["921", "922", "902"] }
+        ]
+      },
+      {
+        sectionTitle: "PLANT 이동",
+        subSection: "SAP-WMS 활용도 평가",
+        questions: [
+          { id: "3-1", type: "multiple", question: "PLANT 이동을 하기 위해 사용하는 T-Code 는?", options: ["MB1A", "MB1B", "LT10", "LT01", "LT0G"] },
+          { id: "3-2", type: "single", question: "PLANT 이동 후 LS24에서 생성되는 Storage type 은?", options: ["921", "920", "911"] }
+        ]
+      },
+      {
+        sectionTitle: "Wave",
+        subSection: "SAP-WMS 활용도 평가",
+        questions: [
+          { id: "4-1", type: "single", question: "Order Wave 를 할 수 있는 T-Code 는?", options: ["VL02N", "MB01", "ZWORKLIST"] }
+        ]
+      },
+      {
+        sectionTitle: "PGI Reverse",
+        subSection: "SAP-WMS 활용도 평가",
+        questions: [
+          { id: "5-1", type: "multiple", question: "PGI가 완료된 DN 의 Reverse 에 사용하는 T-code 를 모두 고르시오", options: ["VL09", "LT0G", "MBST"] },
+          { id: "5-2", type: "single", question: "Wave를 하기 전에 DN 삭제가 가능한가?", options: ["Yes", "No"] },
+          { id: "5-3", type: "single", question: "Consol 까지 완료된 DN을 Picking 전 상태로 되돌리기 위해 사용하는 T-Code 는?", options: ["LM07", "LT0G", "LT10"] },
+          { id: "5-4", type: "single", question: "WM 모듈에서 Service order 의 Reverse 진행시 필요한 작업은?", options: ["LS01N 에서 SVO Bin 생성", "MB01 에서 GR 처리"] }
+        ]
+      },
+      {
+        sectionTitle: "Assign",
+        subSection: "SAP-WMS 활용도 평가",
+        questions: [
+          { id: "6-1", type: "single", question: "Assign을 위한 T-Code 는?", options: ["LRF2", "LRF1", "ZWORKLIST"] },
+          { id: "6-2", type: "multiple", question: "Assign을 하기 위해 확인해야 하는 것을 모두 고르시오", options: ["DN", "SVO", "TO", "UserName", "Queue"] }
+        ]
+      }
+    ]
+  }
+};
+
+/* ══════════════════════════════════════
+   ANSWER KEYS
+   복수: 배열, 단일: 문자열
+   복수 답은 모두 선택해야 정답
+   ══════════════════════════════════════ */
+const ANSWER_KEYS = {
+  op: {
+    "1-1": ["Delivery Note", "PO"],
+    "1-2": ["Material", "Quantity", "Labels", "Qty per", "Print Barcode", "Reason Code"],
+    "1-3-1": "P/N",
+    "1-3-2": "수량",
+    "1-3-3": "출력해야 할 입고 Label의 장수",
+    "1-3-4": "Label 1장에 표시될 입고 수량",
+    "1-3-5": "Y 입력",
+    "1-3-6": "Label의 Barcode 출력 여부 설정",
+    "1-4": "PDA 또는 WMS에서 GR Text 문구가 포함된 Label을 출력하여 부착한다.",
+    "1-5": "SU Label",
+    "1-6": "Transfer Order ########## Created",
+    "2-1": "SU Number",
+    "2-2": "P/N",
+    "2-3": "Putaway Cart Number",
+    "3-1": "SU Number",
+    "3-2": "Number",
+    "3-3": ["SU", "Bin Location"],
+    "4-1": "4100",
+    "4-2": ["RF Gun", "Label Printer", "Picking List"],
+    "4-3": ["Bin Location", "P/N"],
+    "4-4": "Zpick Label",
+    "4-5": "더 이상 Pick을 진행할 작업이 없음을 의미하는 메시지",
+    "4-6": "TO",
+    "4-7": "Save",
+    "4-8": ["DN", "P/N"]
+  },
+  cs: {
+    "1-1": "LQ02",
+    "1-2": "ZZBLOCK",
+    "1-3": ["LM07", "LM05"],
+    "2-1": ["MB1B", "LT10", "LT01"],
+    "2-2": "921",
+    "3-1": ["MB1B", "LT10", "LT01"],
+    "3-2": "920",
+    "4-1": "ZWORKLIST",
+    "5-1": ["VL09", "LT0G", "MBST"],
+    "5-2": "Yes",
+    "5-3": "LT0G",
+    "5-4": "LS01N 에서 SVO Bin 생성",
+    "6-1": "LRF1",
+    "6-2": ["DN", "SVO", "TO", "UserName", "Queue"]
+  }
+};
+
+/* ══════════════════════════════════════
+   SCORING
+   ══════════════════════════════════════ */
+function gradeAnswers(roleId, answers) {
+  const keys = ANSWER_KEYS[roleId];
+  if (!keys) return { correct: 0, total: 0, score: 0, details: [] };
+  const questions = flattenQuestions(roleId);
+  let correct = 0;
+  const details = [];
+  questions.forEach(q => {
+    const key = keys[q.id];
+    const userAns = answers[q.id];
+    let isCorrect = false;
+    if (Array.isArray(key)) {
+      if (Array.isArray(userAns)) {
+        const sortedKey = [...key].sort();
+        const sortedUser = [...userAns].sort();
+        isCorrect = sortedKey.length === sortedUser.length && sortedKey.every((v, i) => v === sortedUser[i]);
+      }
+    } else {
+      isCorrect = userAns === key;
+    }
+    if (isCorrect) correct++;
+    details.push({ id: q.id, sectionTitle: q.sectionTitle, correct: isCorrect });
+  });
+  return { correct, total: questions.length, score: questions.length > 0 ? Math.round((correct / questions.length) * 100) : 0, details };
+}
+
+/* ══════════════════════════════════════
+   STATE
+   ══════════════════════════════════════ */
+let state = {
+  step: "welcome",
+  role: "",
+  name: "",
+  questionIndex: 0,
+  answers: {},
+  qualitative: { inconvenience: "", issue: "" },
+  duplicateInfo: null,
+  isSubmitting: false
+};
+
+function getRole() { return ROLE_DATA[state.role] || null; }
+
+function flattenQuestions(roleId) {
+  if (roleId === undefined) roleId = state.role;
+  const role = ROLE_DATA[roleId];
+  if (!role) return [];
+  const result = [];
+  role.sections.forEach((section, sectionIdx) => {
+    section.questions.forEach((q, qIdx) => {
+      result.push({ ...q, sectionTitle: section.sectionTitle, subSection: section.subSection || "", sectionIdx, qIdx });
+    });
+  });
+  return result;
+}
+
+function totalQuestions() { return flattenQuestions().length; }
+function currentQuestion() { return flattenQuestions()[state.questionIndex]; }
+function getAnswer(qid) { return state.answers[qid]; }
+
+function isAnswered(q) {
+  const a = getAnswer(q.id);
+  return q.type === "multiple" ? Array.isArray(a) && a.length > 0 : typeof a === "string" && a.length > 0;
+}
+
+function progressPercent() {
+  const total = totalQuestions();
+  if (!total) return 0;
+  return Math.round((state.questionIndex / total) * 100);
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+/* ══════════════════════════════════════
+   DUPLICATE CHECK (via Google Apps Script)
+   ══════════════════════════════════════ */
+async function checkDuplicate(name) {
+  if (!GOOGLE_SCRIPT_URL) return null;
+  try {
+    const res = await fetch(GOOGLE_SCRIPT_URL + "?action=checkDuplicate&name=" + encodeURIComponent(name.trim()));
+    const data = await res.json();
+    if (data && data.duplicate) return data;
+    return null;
+  } catch (e) {
+    console.error("Duplicate check failed:", e);
+    return null;
+  }
+}
+
+/* ══════════════════════════════════════
+   RENDERS
+   ══════════════════════════════════════ */
+function renderWelcome() {
+  return `
+    <div class="fade-in" style="flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;padding-top:16px;padding-bottom:16px">
+      <div class="accent-line top"></div>
+      <div class="accent-line bottom"></div>
+      <div style="text-align:center;margin-bottom:28px;position:relative;z-index:1">
+        <div style="font-size:18px;color:#fff;opacity:0.92;letter-spacing:1.6px;margin-bottom:6px;font-weight:500">Winning As One</div>
+        <h1 style="font-size:34px;font-weight:900;letter-spacing:0.4px;margin-bottom:14px">DSV x Schenker</h1>
+        <div style="width:180px;height:3px;background:#fff;margin:0 auto 16px;border-radius:999px;opacity:0.9"></div>
+        <div style="font-size:23px;font-weight:800;line-height:1.45;color:#E0F2FE">WM Module Transition<br>Skill Matrix Survey</div>
+      </div>
+      <div class="card" style="text-align:center;padding:22px 20px;position:relative;z-index:1">
+        <div style="font-size:16px;font-weight:700;line-height:1.7;color:#fff"><span style="display:block;white-space:nowrap">지난 2월 말 SAP WM 전환 이후,</span><span style="display:block;white-space:nowrap">현장에서 열심히 적응하고 계신 여러분께 감사드립니다.</span></div>
+      </div>
+      <div class="info-grid" style="margin-bottom:16px;position:relative;z-index:1">
+        <div class="info-card">
+          <h3>📋 설문조사 목적</h3>
+          <ul><li>현재 WM 작업 숙련도 파악</li><li>추가 교육 필요 영역 확인</li><li>전환 과정 어려움 공유</li></ul>
+        </div>
+        <div class="info-card">
+          <h3>⏱️ 소요 시간</h3>
+          <p><strong>약 5~10분</strong><br>역할별 문항 기준</p>
+        </div>
+        <div class="info-card">
+          <h3>🔒 개인정보 보호</h3>
+          <ul><li>응답 정보는 내부 확인용으로만 사용됩니다</li><li>평가 결과 정리 목적 외에는 사용되지 않습니다</li><li>실무 교육 및 운영 개선 참고용으로 활용됩니다</li></ul>
+        </div>
+        <div class="info-card">
+          <h3>✅ 참여 대상</h3>
+          <ul><li>OP (Operator)</li><li>CS (Customer Service)</li></ul>
+        </div>
+      </div>
+      <div class="card" style="text-align:center;position:relative;z-index:1">
+        <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:10px">여러분의 의견이 더 나은 작업 환경을 만듭니다</div>
+        <div style="font-size:13px;line-height:1.7;color:rgba(255,255,255,0.62);margin-bottom:10px">시작하기를 누르면 역할 선택 화면으로 이동합니다.</div>
+        <div class="muted-note" style="text-align:left">WM Module로 전환됨에 따라 설문조사에 참여하는 인원들이 보다 쉽고 편하게 응답할 수 있도록 문항을 구성했습니다. 현장의 실제 사용 경험과 의견을 남겨주시면 이후 교육과 운영 개선에 큰 도움이 됩니다.</div>
+      </div>
+      <button class="btn" onclick="go('role')" style="position:relative;z-index:1">시작하기</button>
+    </div>`;
+}
+
+function renderRoleSelection() {
+  const cards = Object.values(ROLE_DATA).map(role => {
+    const selected = state.role === role.id;
+    return `
+      <div class="card section-card ${selected ? 'selected' : ''}" onclick="selectRole('${role.id}')">
+        <div class="section-icon">${role.icon}</div>
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:700">${role.name}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.42);margin-top:2px">${role.id === 'op' ? 'RF Gun 실무 평가' : 'SAP-WMS 활용도 평가'}</div>
+        </div>
+        <div class="checkbox ${selected ? 'checked' : ''}">${selected ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}</div>
+      </div>`;
+  }).join('');
+
+  const roleDesc = getRole() ? `
+    <div class="card" style="padding:18px 20px">
+      <div style="font-size:13px;color:rgba(255,255,255,0.42);margin-bottom:10px;font-weight:700">선택된 직무</div>
+      <div style="font-size:16px;font-weight:800;color:#F8FAFC;margin-bottom:6px">${escapeHtml(getRole().name)}</div>
+      <div style="font-size:14px;line-height:1.75;color:rgba(255,255,255,0.78)">${escapeHtml(getRole().description)}</div>
+    </div>` : '';
+
+  return `
+    <div class="fade-in">
+      <div class="step-label">STEP 1</div>
+      <h2>직무 선택</h2>
+      <p class="sub">참여하실 직무를 선택해주세요.</p>
+      ${cards}
+      ${roleDesc}
+      <div style="display:flex;gap:12px">
+        <button class="btn btn-secondary" onclick="go('welcome')">← 이전</button>
+        <button class="btn" style="flex:1" ${state.role ? '' : 'disabled'} onclick="go('name')">다음 →</button>
+      </div>
+    </div>`;
+}
+
+function renderName() {
+  const role = getRole();
+  return `
+    <div class="fade-in">
+      <div class="step-label">STEP 2</div>
+      <h2>이름 입력</h2>
+      <p class="sub">응답 확인을 위해 이름을 입력해주세요.</p>
+      <div class="card">
+        <div style="margin-bottom:12px"><span class="badge badge-section">${role ? role.icon + ' ' + role.name : '역할 미선택'}</span></div>
+        <input type="text" id="nameInput" value="${escapeHtml(state.name)}" placeholder="이름을 입력하세요" oninput="onNameInput(this.value)">
+        <div class="helper-text">이름은 응답 식별 및 제출 내역 확인용으로만 사용됩니다.</div>
+      </div>
+      <div style="display:flex;gap:12px">
+        <button class="btn btn-secondary" onclick="go('role')">← 이전</button>
+        <button class="btn" style="flex:1" id="startBtn" ${state.name.trim() ? '' : 'disabled'} onclick="goToConfirm()">다음 →</button>
+      </div>
+    </div>`;
+}
+
+function renderConfirm() {
+  const role = getRole();
+  return `
+    <div class="fade-in">
+      <div class="step-label">STEP 3</div>
+      <h2>정보 확인</h2>
+      <p class="sub">입력하신 정보를 확인해주세요.</p>
+
+      <div class="card" style="text-align:center;padding:28px 20px">
+        <div class="confirm-icon">${role.icon}</div>
+        <div style="font-size:22px;font-weight:800;color:#F8FAFC;margin-bottom:6px">${escapeHtml(state.name)}<span style="font-size:16px;font-weight:600;color:rgba(255,255,255,0.55)">님</span></div>
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:12px;background:rgba(37,99,235,0.12);border:1px solid rgba(37,99,235,0.25);margin-top:12px">
+          <span style="font-size:14px;font-weight:700;color:#93C5FD">${escapeHtml(role.name)}</span>
+        </div>
+        <div style="font-size:14px;line-height:1.7;color:rgba(255,255,255,0.62);margin-top:16px">${escapeHtml(state.name)}님은 <strong style="color:#E0F2FE">${escapeHtml(role.name)}</strong> 직무를 선택하셨습니다.</div>
+      </div>
+
+      <div class="muted-note" style="margin-bottom:16px">평가를 시작하면 모든 문항에 응답하신 후 제출하실 수 있습니다. 한번 제출하면 동일한 이름으로 재참여가 불가합니다.</div>
+
+      <div style="display:flex;gap:12px">
+        <button class="btn btn-secondary" onclick="go('name')">← 이전</button>
+        <button class="btn" style="flex:1" onclick="startSurvey()">평가 시작 →</button>
+      </div>
+    </div>`;
+}
+
+function renderDuplicate() {
+  const info = state.duplicateInfo;
+  return `
+    <div class="fade-in" style="flex:1;display:flex;flex-direction:column;justify-content:center">
+      <div class="card" style="text-align:center;padding:32px 20px">
+        <div class="duplicate-icon">⚠️</div>
+        <h2 style="font-size:20px;margin-bottom:12px;color:#FCA5A5">이미 설문을 진행하셨습니다</h2>
+        <div style="font-size:15px;line-height:1.8;color:rgba(255,255,255,0.72);margin-bottom:20px">
+          <strong style="color:#F8FAFC">${escapeHtml(state.name)}</strong>님은 앞서<br>
+          <strong style="color:#93C5FD">${info ? escapeHtml(info.roleName) : ''}</strong> 직무로<br>
+          설문조사에 참여하셨습니다.
+        </div>
+        <div class="muted-note" style="text-align:left">중복 참여는 허용되지 않습니다. 재참여가 필요한 경우 관리자에게 문의해주세요.</div>
+      </div>
+      <button class="btn" onclick="resetSurvey()" style="margin-top:4px">초기 화면으로 돌아가기</button>
+    </div>`;
+}
+
+function renderSurvey() {
+  const q = currentQuestion();
+  const total = totalQuestions();
+  const progress = progressPercent();
+  const ans = getAnswer(q.id);
+  const canGoBack = state.questionIndex > 0;
+
+  const optionsHtml = q.options.map((option, idx) => {
+    const selected = q.type === 'multiple' ? Array.isArray(ans) && ans.includes(option) : ans === option;
+    const marker = String.fromCharCode(65 + idx);
+    return `
+      <button class="option-btn ${selected ? 'selected' : ''}" onclick="toggleOption('${q.id}', ${idx})">
+        <div class="option-marker">${marker}</div>
+        <div style="flex:1;font-size:14px;line-height:1.6">${escapeHtml(option)}</div>
+      </button>`;
+  }).join('');
+
+  return `
+    <div class="fade-in">
+      <div style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;color:rgba(255,255,255,0.4);font-weight:600">${state.questionIndex + 1} / ${total}</span>
+          <span style="font-size:12px;color:rgba(255,255,255,0.4);font-weight:600">${progress}%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <span class="badge badge-section">${escapeHtml(q.sectionTitle)}</span>
+        ${q.subSection ? `<span class="badge badge-sub">${escapeHtml(q.subSection)}</span>` : ''}
+      </div>
+
+      <div class="card" style="padding:24px 20px">
+        <div style="font-size:13px;color:rgba(255,255,255,0.36);margin-bottom:8px;font-weight:700">문항 ${escapeHtml(q.id)}</div>
+        ${q.parentQuestion ? `<p style="font-size:16px;font-weight:700;line-height:1.65;color:#F8FAFC;margin-bottom:12px">${escapeHtml(q.parentQuestion)}</p>` : `<p style="font-size:17px;font-weight:700;line-height:1.65;color:#F8FAFC">${escapeHtml(q.question)}</p>`}
+        ${q.parentQuestion ? `<div style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);font-size:14px;font-weight:800;color:#E0F2FE;margin-bottom:12px">${escapeHtml(q.questionLabel || '')}</div><p style="font-size:14px;line-height:1.65;color:rgba(255,255,255,0.72)">${escapeHtml(q.question)}</p>` : ``}
+        <div class="helper-text">${q.type === 'multiple' ? '복수 선택 가능' : '하나만 선택 가능'}</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">${optionsHtml}</div>
+
+      <div style="display:flex;gap:12px">
+        <button class="btn btn-secondary" id="backBtn" onclick="prevQuestion()" style="${canGoBack ? '' : 'display:none'}">← 뒤로가기</button>
+        <button class="btn" style="flex:1" ${isAnswered(q) ? '' : 'disabled'} onclick="nextQuestion()">${state.questionIndex === total - 1 ? '제출하기 →' : '다음 →'}</button>
+      </div>
+    </div>`;
+}
+
+function renderQualitative() {
+  const isCS = state.role === 'cs';
+  const q1Label = isCS
+    ? '1. SAP WM 작업 중 불편하거나 개선이 필요하다고 느낀 부분이 있습니까?'
+    : '1. RF Gun 또는 SAP WM 작업 중 불편하거나 개선이 필요하다고 느낀 부분이 있습니까?';
+  const q1Placeholder = isCS
+    ? '예: T-code 사용 시 불편함, 처리 절차의 복잡성, 특정 작업 단계의 개선 필요 사항 등'
+    : '예: RF Gun 화면 전환 속도, Print 서버 속도, 특정 작업 단계의 불편함 등';
+  const q2Label = isCS
+    ? '2. SAP WM 작업 중 실제로 자주 발생하는 문제나 오류가 있다면 작성해 주세요.'
+    : '2. WM 작업 중 실제로 자주 발생하는 문제나 오류가 있다면 작성해 주세요.';
+  const q2Placeholder = isCS
+    ? '예: BLOCK 처리 오류, SLOC/PLANT 이동 시 문제, PGI Reverse 관련 이슈 등'
+    : '예: RF Gun 오류, SU Label 재출력 문제, Pick 작업 오류 등';
+
+  return `
+    <div class="fade-in">
+      <div class="step-label">STEP 5</div>
+      <h2>추가 의견</h2>
+      <p class="sub">아래 질문은 WM 운영 개선을 위한 참고 자료입니다. 자유롭게 의견을 작성해 주세요.</p>
+      <div class="card">
+        <div style="font-size:14px;font-weight:800;color:#F8FAFC;margin-bottom:10px">${q1Label}</div>
+        <textarea id="qualitative1" placeholder="${q1Placeholder}" oninput="updateQualitative('inconvenience', this.value)">${escapeHtml(state.qualitative.inconvenience || '')}</textarea>
+      </div>
+      <div class="card">
+        <div style="font-size:14px;font-weight:800;color:#F8FAFC;margin-bottom:10px">${q2Label}</div>
+        <textarea id="qualitative2" placeholder="${q2Placeholder}" oninput="updateQualitative('issue', this.value)">${escapeHtml(state.qualitative.issue || '')}</textarea>
+        <div class="helper-text">정성 의견은 선택 입력입니다. 작성한 내용은 교육 및 운영 개선 참고용으로만 활용됩니다.</div>
+      </div>
+      <div style="display:flex;gap:12px">
+        <button class="btn btn-secondary" onclick="goBackToLastQuestion()">← 이전</button>
+        <button class="btn" style="flex:1" onclick="submitSurvey()">제출하기 →</button>
+      </div>
+    </div>`;
+}
+
+function renderSubmitting() {
+  return `
+    <div class="fade-in" style="flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center">
+      <div class="loading-spinner"></div>
+      <h2 style="font-size:18px;margin-bottom:8px">제출 중...</h2>
+      <p style="font-size:14px;color:rgba(255,255,255,0.55)">응답을 저장하고 있습니다.</p>
+    </div>`;
+}
+
+function renderComplete() {
+  return `
+    <div class="fade-in" style="flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center">
+      <div style="width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,#22C55E,#16A34A);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;box-shadow:0 8px 32px rgba(34,197,94,0.30)">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="step-label" style="margin-bottom:8px;display:block">STEP 6</div>
+      <h2 style="font-size:24px;margin-bottom:8px">제출 완료</h2>
+      <p style="font-size:14px;color:rgba(255,255,255,0.58);line-height:1.7;margin-bottom:20px"><strong>${escapeHtml(state.name)}</strong>님의 Skill Matrix 응답이 저장되었습니다.</p>
+      <div class="card" style="text-align:left">
+        <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:8px"><span style="font-size:13px;color:rgba(255,255,255,0.45)">역할</span><span style="font-size:13px;font-weight:700">${escapeHtml(getRole().name)}</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px"><span style="font-size:13px;color:rgba(255,255,255,0.45)">응답 문항</span><span style="font-size:13px;font-weight:700">${totalQuestions()}개</span></div>
+      </div>
+      <button class="btn" onclick="resetSurvey()">처음으로</button>
+    </div>`;
+}
+
+/* ══════════════════════════════════════
+   RENDER ROUTER
+   ══════════════════════════════════════ */
+function render() {
+  const app = document.getElementById('app');
+  const renderers = {
+    welcome: renderWelcome,
+    role: renderRoleSelection,
+    name: renderName,
+    confirm: renderConfirm,
+    duplicate: renderDuplicate,
+    survey: renderSurvey,
+    qualitative: renderQualitative,
+    submitting: renderSubmitting,
+    complete: renderComplete
+  };
+  const fn = renderers[state.step];
+  if (fn) app.innerHTML = fn();
+  window.scrollTo(0, 0);
+
+  if (state.step === 'name') {
+    setTimeout(() => {
+      const inp = document.getElementById('nameInput');
+      if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+    }, 50);
+  }
+}
+
+/* ══════════════════════════════════════
+   ACTIONS
+   ══════════════════════════════════════ */
+function go(step) { state.step = step; render(); }
+function selectRole(roleId) { state.role = roleId; render(); }
+
+function onNameInput(val) {
+  state.name = val;
+  const btn = document.getElementById('startBtn');
+  if (btn) btn.disabled = !val.trim();
+}
+
+async function goToConfirm() {
+  if (!state.name.trim() || !state.role) return;
+  const dup = await checkDuplicate(state.name.trim());
+  if (dup) {
+    state.duplicateInfo = dup;
+    go('duplicate');
+    return;
+  }
+  go('confirm');
+}
+
+function startSurvey() {
+  if (!state.name.trim() || !state.role) return;
+  state.questionIndex = 0;
+  go('survey');
+}
+
+function toggleOption(qid, optionIdx) {
+  const q = flattenQuestions().find(item => item.id === qid);
+  if (!q) return;
+  const option = q.options[optionIdx];
+  if (q.type === 'single') {
+    state.answers[qid] = option;
+  } else {
+    const current = Array.isArray(state.answers[qid]) ? [...state.answers[qid]] : [];
+    const idx = current.indexOf(option);
+    if (idx >= 0) current.splice(idx, 1);
+    else current.push(option);
+    state.answers[qid] = current;
+  }
+  render();
+}
+
+function nextQuestion() {
+  const q = currentQuestion();
+  if (!isAnswered(q)) return;
+  if (state.questionIndex < totalQuestions() - 1) { state.questionIndex++; render(); }
+  else { go('qualitative'); }
+}
+
+function prevQuestion() { if (state.questionIndex > 0) { state.questionIndex--; render(); } }
+function updateQualitative(field, value) { state.qualitative[field] = value; }
+function goBackToLastQuestion() { state.step = 'survey'; state.questionIndex = totalQuestions() - 1; render(); }
+
+async function submitSurvey() {
+  if (state.isSubmitting) return;
+  state.isSubmitting = true;
+  go('submitting');
+
+  const result = gradeAnswers(state.role, state.answers);
+  const payload = {
+    timestamp: new Date().toISOString(),
+    role: state.role,
+    roleName: getRole().name,
+    name: state.name.trim(),
+    answers: state.answers,
+    qualitative: state.qualitative,
+    score: result.score,
+    correct: result.correct,
+    total: result.total,
+    details: result.details
+  };
+
+  if (!GOOGLE_SCRIPT_URL) {
+    console.log('Survey data (no Google Script URL configured):', JSON.stringify(payload, null, 2));
+    state.isSubmitting = false;
+    go('complete');
+    return;
+  }
+
+  try {
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+    state.isSubmitting = false;
+    go('complete');
+  } catch (e) {
+    console.error(e);
+    state.isSubmitting = false;
+    alert('제출 중 오류가 발생했습니다. 다시 시도해주세요.');
+    go('qualitative');
+  }
+}
+
+function resetSurvey() {
+  state = {
+    step: 'welcome', role: '', name: '', questionIndex: 0,
+    answers: {}, qualitative: { inconvenience: '', issue: '' },
+    duplicateInfo: null, isSubmitting: false
+  };
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
